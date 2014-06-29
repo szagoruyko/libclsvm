@@ -13,6 +13,6 @@ add_definitions(-std=c++11)
 
 include_directories(${OpenCV_INCLUDE_DIRS} ${OpenCL_INCLUDE_DIRS} ${EIGEN3_INCLUDE_DIR})
 
-add_executable(${PROJECT_NAME} main.cpp clsvm.hpp)
+add_executable(${PROJECT_NAME} main.cpp clsvm.hpp clsvm.cpp)
 
 target_link_libraries(${PROJECT_NAME} matio ${OpenCV_LIBS} ${OPENCL_LIBRARIES}) 
