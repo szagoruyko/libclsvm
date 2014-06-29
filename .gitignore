@@ -20,3 +20,5 @@
 *.out
 *.app
 run
+.ycm_extra_conf.py
+build
