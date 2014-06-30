@@ -5,6 +5,7 @@
 
 #include "clsvm.hpp"
 
+
 CLSVM::CLSVM(const cl::CommandQueue queue, int dims) : queue(queue), dim(dims), n_w(dims+1) {
   const char source_name[] = "sgd.cl";
   printf ("Loading opencl source (%s)...\n", source_name);
@@ -24,7 +25,8 @@ CLSVM::CLSVM(const cl::CommandQueue queue, int dims) : queue(queue), dim(dims), 
   
   w = cl::Buffer (context, CL_MEM_READ_WRITE, sizeof(float)*n_w);
 }
-    
+
+
 void
 CLSVM::train (const cl::Buffer& x, const cl::Buffer& y, int batch_size, int max_epochs, float lambda)
 {
@@ -79,7 +81,8 @@ CLSVM::train (const cl::Buffer& x, const cl::Buffer& y, int batch_size, int max_
       projectOntoL2Ball(norm);
   }
 }
-    
+
+
 void
 CLSVM::decision_function (const cl::Buffer& x, cl::Buffer& decision)
 {
@@ -87,7 +90,8 @@ CLSVM::decision_function (const cl::Buffer& x, cl::Buffer& decision)
   auto kernel = cl::make_kernel<const cl::Buffer&, const cl::Buffer&, cl::Buffer&, int> (program, "decision_function");
   kernel (cl::EnqueueArgs(queue, cl::NDRange (n_samples)), x, w, decision, dim);
 }
-    
+
+
 void
 CLSVM::setRandomWeights ()
 {
@@ -95,7 +99,8 @@ CLSVM::setRandomWeights ()
   //std::cout << winit.norm() << " " << 1.f/sqrt(lambda) << std::endl;
   queue.enqueueWriteBuffer (w, CL_TRUE, 0, sizeof(float)*n_w, winit.data());
 }
-    
+
+
 float
 CLSVM::computeWeigtsNorm ()
 {
@@ -106,7 +111,8 @@ CLSVM::computeWeigtsNorm ()
   cl::enqueueReadBuffer (l2norm, CL_TRUE, 0, sizeof(float), &ret);
   return ret;
 }
-    
+
+
 void
 CLSVM::projectOntoL2Ball (float norm)
 {
