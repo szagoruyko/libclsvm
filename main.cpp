@@ -17,8 +17,8 @@ int main (int argc, char** argv)
 
   matvar_t* xvar = Mat_VarRead(mat, "x");
   matvar_t* yvar = Mat_VarRead(mat, "y");
-  const int n = xvar->dims[1];
-  const int dims = xvar->dims[0];
+  const int n = static_cast<int>(xvar->dims[1]);
+  const int dims = static_cast<int>(xvar->dims[0]);
 
   // check that data is in single precision format
   if (xvar->data_type != MAT_T_SINGLE || yvar->data_type != MAT_T_SINGLE)
@@ -40,7 +40,7 @@ int main (int argc, char** argv)
   
   auto device = mdevices[DEVICE];
   cl::Context context (device);
-  cl::CommandQueue queue (context, device);
+  cl::CommandQueue queue (context, device, CL_QUEUE_PROFILING_ENABLE);
 
   cl::Buffer X (context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, sizeof(float)*n*dims, xvar->data);
   cl::Buffer Y (context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, sizeof(float)*n, yvar->data);

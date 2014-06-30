@@ -31,7 +31,7 @@ void
 CLSVM::train (const cl::Buffer& x, const cl::Buffer& y, int batch_size, int max_epochs, float lambda)
 {
   const int k = batch_size;
-  const int n = y.getInfo<CL_MEM_SIZE>()/sizeof(float);
+  const int n = static_cast<int>(y.getInfo<CL_MEM_SIZE>())/sizeof(float);
 
   auto context = queue.getInfo<CL_QUEUE_CONTEXT> ();	
   cl::Buffer idx (context, CL_MEM_READ_ONLY, sizeof(int)*k);
@@ -88,7 +88,12 @@ CLSVM::decision_function (const cl::Buffer& x, cl::Buffer& decision)
 {
   size_t n_samples = x.getInfo<CL_MEM_SIZE>()/sizeof(float)/dim;
   auto kernel = cl::make_kernel<const cl::Buffer&, const cl::Buffer&, cl::Buffer&, int> (program, "decision_function");
-  kernel (cl::EnqueueArgs(queue, cl::NDRange (n_samples)), x, w, decision, dim);
+
+  cl::Event event = kernel (cl::EnqueueArgs(queue, cl::NDRange (n_samples)), x, w, decision, dim);
+  event.wait();
+  auto st = event.getProfilingInfo<CL_PROFILING_COMMAND_START>();
+  auto fn = event.getProfilingInfo<CL_PROFILING_COMMAND_END>();
+  std::cout << float(fn - st)/1000000.0 << " ms" << std::endl;
 }
 
 
