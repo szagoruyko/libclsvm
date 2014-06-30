@@ -28,7 +28,7 @@ int main (int argc, char** argv)
   {
     y[i] = ((double*)yvar->data)[i];
     for (int j=0; j<dims; ++j)
-      x[i*dims + j] = ((double*)xvar->data)[i*(dims+1) + j];
+      x[i*dims + j] = ((float*)xvar->data)[i*dims + j];
   }
 
   std::vector<cl::Platform> platforms(5);
@@ -47,7 +47,7 @@ int main (int argc, char** argv)
   cl::Buffer D (context, CL_MEM_READ_WRITE, sizeof(float)*n);
 
   CLSVM svm (queue, dims);
-  svm.train(X, Y, 12000, 2000);
+  svm.train(X, Y, 2048, 2000);
   svm.decision_function (X, D);
 
   std::vector<float> d (n);
@@ -57,7 +57,7 @@ int main (int argc, char** argv)
   {
     if ((d[i]>0.f)*2.f - 1.f != y[i])
       missclassified++;
-    //std::cout << (d[i]>0.f)*2.f-1.f << " " << y[i] << std::endl;
+   std::cout << (d[i]>0.f)*2.f-1.f << " " << y[i] << std::endl;
   }
   std::cout << missclassified << "/" << n << std::endl;
   return 0;
