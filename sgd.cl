@@ -8,7 +8,7 @@ void compute_kernel (__global const int* idx,
   int j = get_global_id(0);
   int id = idx[j];
 
-  float r = 0.f;
+  float r = w[dim];
   for (int i=0; i<dim; ++i)
     r += w[i]*x[id*dim + i];
   res[j] = r;
@@ -21,7 +21,7 @@ void decision_function (__global const float* x,
                         int dim)
 {
   int id = get_global_id(0);
-  float r = 0.f;
+  float r = w[dim];
   for (int i=0; i<dim; ++i)
     r += w[i]*x[id*dim + i];
   res[id] = r;
@@ -43,7 +43,7 @@ void update_weights (__global const int* idx,
   for (int j=0; j<n_candidates; ++j)
   {
     int id = idx[j];
-    subgr += y[id]*x[id*dim + i];
+    subgr += i==dim ? y[id] : y[id]*x[id*dim + i];
   }
 
   w[i] = (1.f - etat*lambda)*w[i] + etat/((float)n_candidates)*subgr;
@@ -52,10 +52,10 @@ void update_weights (__global const int* idx,
 __kernel
 void compute_l2norm (__global const float* w,
                      __global float* ret,
-                     int dim)
+                     int n_w)
 {
   float r = 0.f;
-  for (int i=0; i<dim; ++i)
+  for (int i=0; i<n_w; ++i)
     r += w[i]*w[i];
   ret[0] = sqrt(r);
 }

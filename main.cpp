@@ -18,14 +18,14 @@ int main (int argc, char** argv)
   matvar_t* xvar = Mat_VarRead(mat, "x");
   matvar_t* yvar = Mat_VarRead(mat, "y");
   const int n = xvar->dims[1];
-  const int dims = xvar->dims[0];
+  const int dims = xvar->dims[0] - 1;
 
   std::vector<float> x (n*dims), y (n);
   for (int i=0; i<n; ++i)
   {
     y[i] = ((double*)yvar->data)[i];
     for (int j=0; j<dims; ++j)
-      x[i*dims + j] = ((double*)xvar->data)[i*dims + j];
+      x[i*dims + j] = ((double*)xvar->data)[i*(dims+1) + j];
   }
 
   std::vector<cl::Platform> platforms(5);
@@ -43,7 +43,7 @@ int main (int argc, char** argv)
   cl::Buffer Y (context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, sizeof(float)*n, y.data());
   cl::Buffer D (context, CL_MEM_READ_WRITE, sizeof(float)*n);
 
-  CLSVM svm (queue, dims-1);
+  CLSVM svm (queue, dims);
   svm.train(X, Y, 64);
   svm.decision_function (X, D);
 

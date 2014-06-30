@@ -21,5 +21,5 @@ protected:
   cl::CommandQueue queue;
   cl::Program program;
   cl::Buffer w;
-  int dim;
+  int dim, n_w;
 };

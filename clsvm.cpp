@@ -5,7 +5,7 @@
 
 #include "clsvm.hpp"
 
-CLSVM::CLSVM(const cl::CommandQueue queue, int dims) : queue(queue), dim(dims+1) {
+CLSVM::CLSVM(const cl::CommandQueue queue, int dims) : queue(queue), dim(dims), n_w(dims+1) {
   const char source_name[] = "sgd.cl";
   printf ("Loading opencl source (%s)...\n", source_name);
         
@@ -22,7 +22,7 @@ CLSVM::CLSVM(const cl::CommandQueue queue, int dims) : queue(queue), dim(dims+1)
   
   std::cout<< program.getBuildInfo<CL_PROGRAM_BUILD_LOG>(devices[0]) <<std::endl;
   
-  w = cl::Buffer (context, CL_MEM_READ_WRITE, sizeof(float)*dim);
+  w = cl::Buffer (context, CL_MEM_READ_WRITE, sizeof(float)*n_w);
 }
     
 void
@@ -71,7 +71,7 @@ CLSVM::train (const cl::Buffer& x, const cl::Buffer& y, int batch_size, int max_
     float etat = 1.0f/(lambda*float(t));
     
     int n_selected = static_cast<int> (selected.size());
-    update (cl::EnqueueArgs (queue, cl::NDRange(dim)), idx, x, y, w, dim, etat, lambda, n_selected);
+    update (cl::EnqueueArgs (queue, cl::NDRange(n_w)), idx, x, y, w, dim, etat, lambda, n_selected);
     
     // compute norm and project onto l2 norm ball
     float norm = computeWeigtsNorm();
@@ -91,9 +91,9 @@ CLSVM::decision_function (const cl::Buffer& x, cl::Buffer& decision)
 void
 CLSVM::setRandomWeights ()
 {
-  Eigen::VectorXf winit = Eigen::VectorXf::Random (dim);
+  Eigen::VectorXf winit = Eigen::VectorXf::Random (n_w);
   //std::cout << winit.norm() << " " << 1.f/sqrt(lambda) << std::endl;
-  queue.enqueueWriteBuffer (w, CL_TRUE, 0, sizeof(float)*dim, winit.data());
+  queue.enqueueWriteBuffer (w, CL_TRUE, 0, sizeof(float)*n_w, winit.data());
 }
     
 float
@@ -101,7 +101,7 @@ CLSVM::computeWeigtsNorm ()
 {
   cl::Buffer l2norm (queue.getInfo<CL_QUEUE_CONTEXT>(), CL_MEM_READ_WRITE, sizeof(float));
   auto kernel = cl::make_kernel<const cl::Buffer&, cl::Buffer&, int> (program, "compute_l2norm");
-  kernel (cl::EnqueueArgs (queue, cl::NDRange (1)), w, l2norm, dim);
+  kernel (cl::EnqueueArgs (queue, cl::NDRange (1)), w, l2norm, n_w);
   float ret = 1.0f;
   cl::enqueueReadBuffer (l2norm, CL_TRUE, 0, sizeof(float), &ret);
   return ret;
