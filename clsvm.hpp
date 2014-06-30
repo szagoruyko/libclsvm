@@ -8,7 +8,7 @@ class CLSVM {
 public:
   CLSVM(const cl::CommandQueue queue, int dims);
 
-  void train (const cl::Buffer& x, const cl::Buffer& y, int batch_size = 32, int max_epochs = 800);
+  void train (const cl::Buffer& x, const cl::Buffer& y, int batch_size = 32, int max_epochs = 800, float lambda = 1e-5f);
         
   void decision_function (const cl::Buffer& x, cl::Buffer& decision);
         
@@ -22,5 +22,4 @@ protected:
   cl::Program program;
   cl::Buffer w;
   int dim;
-  const float lambda = 1e-5f;
 };

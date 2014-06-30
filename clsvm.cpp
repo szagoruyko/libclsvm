@@ -26,7 +26,7 @@ CLSVM::CLSVM(const cl::CommandQueue queue, int dims) : queue(queue), dim(dims+1)
 }
     
 void
-CLSVM::train (const cl::Buffer& x, const cl::Buffer& y, int batch_size, int max_epochs)
+CLSVM::train (const cl::Buffer& x, const cl::Buffer& y, int batch_size, int max_epochs, float lambda)
 {
   const int k = batch_size;
   const int n = y.getInfo<CL_MEM_SIZE>()/sizeof(float);
@@ -92,7 +92,7 @@ void
 CLSVM::setRandomWeights ()
 {
   Eigen::VectorXf winit = Eigen::VectorXf::Random (dim);
-  std::cout << winit.norm() << " " << 1.f/sqrt(lambda) << std::endl;
+  //std::cout << winit.norm() << " " << 1.f/sqrt(lambda) << std::endl;
   queue.enqueueWriteBuffer (w, CL_TRUE, 0, sizeof(float)*dim, winit.data());
 }
     
