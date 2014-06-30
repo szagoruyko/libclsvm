@@ -34,9 +34,12 @@ __kernel
 void decision_function (__global const float* x,
                         __global const float* w,
                         __global float* res,
-                        int dim)
+                        int dim, int n_samples)
 {
   int id = get_global_id(0);
+  if (id >= n_samples)
+    return;
+  
   float r = w[dim];
   for (int i=0; i<dim; ++i)
     r += w[i]*x[id*dim + i];
@@ -70,10 +73,14 @@ void compute_l2norm (__global const float* w,
                      __global float* ret,
                      int n_w)
 {
+  int j = get_global_id(0);
+  if (j>0)
+    return;
+  
   float r = 0.f;
   for (int i=0; i<n_w; ++i)
     r += w[i]*w[i];
-  ret[0] = sqrt(r);
+  ret[j] = sqrt(r);
 }
 
 __kernel

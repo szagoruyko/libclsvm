@@ -5,6 +5,7 @@
 
 #include "clsvm.hpp"
 
+enum {CTX = 32};
 
 CLSVM::CLSVM(const cl::CommandQueue queue, int dims) : queue(queue), dim(dims), n_w(dims+1) {
   const char source_name[] = "sgd.cl";
@@ -63,7 +64,7 @@ CLSVM::train (const cl::Buffer& x, const cl::Buffer& y, int batch_size, int max_
     std::vector<int> selected;
     for (int i=0; i<k; ++i)
       if (hres[i]*hy[candidates[i]] < 1.f)
-	selected.push_back (candidates[i]);
+        selected.push_back (candidates[i]);
     if (selected.empty())
       continue;
     
@@ -86,10 +87,11 @@ CLSVM::train (const cl::Buffer& x, const cl::Buffer& y, int batch_size, int max_
 void
 CLSVM::decision_function (const cl::Buffer& x, cl::Buffer& decision)
 {
-  size_t n_samples = x.getInfo<CL_MEM_SIZE>()/sizeof(float)/dim;
-  auto kernel = cl::make_kernel<const cl::Buffer&, const cl::Buffer&, cl::Buffer&, int> (program, "decision_function");
+  int n_samples = static_cast<int>(x.getInfo<CL_MEM_SIZE>())/sizeof(float)/dim;
+  auto kernel = cl::make_kernel<const cl::Buffer&, const cl::Buffer&, cl::Buffer&, int, int> (program, "decision_function");
 
-  cl::Event event = kernel (cl::EnqueueArgs(queue, cl::NDRange (n_samples)), x, w, decision, dim);
+  int nw = (n_samples + CTX -1)/CTX;
+  cl::Event event = kernel (cl::EnqueueArgs(queue, cl::NDRange (nw*CTX), cl::NDRange(CTX)), x, w, decision, dim, n_samples);
   event.wait();
   auto st = event.getProfilingInfo<CL_PROFILING_COMMAND_START>();
   auto fn = event.getProfilingInfo<CL_PROFILING_COMMAND_END>();
@@ -109,11 +111,13 @@ CLSVM::setRandomWeights ()
 float
 CLSVM::computeWeigtsNorm ()
 {
-  cl::Buffer l2norm (queue.getInfo<CL_QUEUE_CONTEXT>(), CL_MEM_READ_WRITE, sizeof(float));
+  auto context = queue.getInfo<CL_QUEUE_CONTEXT>();
+  cl::Buffer l2norm (context, CL_MEM_READ_WRITE, sizeof(float));
   auto kernel = cl::make_kernel<const cl::Buffer&, cl::Buffer&, int> (program, "compute_l2norm");
   kernel (cl::EnqueueArgs (queue, cl::NDRange (1)), w, l2norm, n_w);
+  queue.finish();
   float ret = 1.0f;
-  cl::enqueueReadBuffer (l2norm, CL_TRUE, 0, sizeof(float), &ret);
+  queue.enqueueReadBuffer (l2norm, CL_TRUE, 0, sizeof(float), &ret);
   return ret;
 }
 

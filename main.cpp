@@ -47,7 +47,7 @@ int main (int argc, char** argv)
   cl::Buffer D (context, CL_MEM_READ_WRITE, sizeof(float)*n);
 
   CLSVM svm (queue, dims);
-  svm.train(X, Y, 2048, 2000);
+  svm.train(X, Y, 64, 2000, 1e+0f);
   svm.decision_function (X, D);
 
   std::vector<float> d (n);
