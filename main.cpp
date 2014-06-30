@@ -4,7 +4,7 @@
 
 #include "clsvm.hpp"
 
-enum {PLATFROM = 0, DEVICE = 2};
+enum {PLATFROM = 0, DEVICE = 0};
 
 
 int main (int argc, char** argv)
@@ -18,7 +18,10 @@ int main (int argc, char** argv)
   matvar_t* xvar = Mat_VarRead(mat, "x");
   matvar_t* yvar = Mat_VarRead(mat, "y");
   const int n = xvar->dims[1];
-  const int dims = xvar->dims[0] - 1;
+  const int dims = xvar->dims[0];
+
+  std::cout << "Got " << n << " samples\n";
+  std::cout << "Problem dimensionality: " << dims << std::endl;
 
   std::vector<float> x (n*dims), y (n);
   for (int i=0; i<n; ++i)
@@ -44,13 +47,18 @@ int main (int argc, char** argv)
   cl::Buffer D (context, CL_MEM_READ_WRITE, sizeof(float)*n);
 
   CLSVM svm (queue, dims);
-  svm.train(X, Y, 64);
+  svm.train(X, Y, 12000, 2000);
   svm.decision_function (X, D);
 
   std::vector<float> d (n);
   queue.enqueueReadBuffer(D, CL_TRUE, 0, sizeof(float)*n, d.data());
+  int missclassified = 0;
   for(int i=0; i<n; ++i)
-    std::cout << (d[i]>0.f)*2.f-1.f << " " << y[i] << std::endl;
-
+  {
+    if ((d[i]>0.f)*2.f - 1.f != y[i])
+      missclassified++;
+    //std::cout << (d[i]>0.f)*2.f-1.f << " " << y[i] << std::endl;
+  }
+  std::cout << missclassified << "/" << n << std::endl;
   return 0;
 }

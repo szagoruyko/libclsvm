@@ -120,3 +120,12 @@ CLSVM::projectOntoL2Ball (float norm)
   kernel (cl::EnqueueArgs (queue, cl::NDRange (dim)), w, norm);
 }
 
+
+std::vector<float>
+CLSVM::getWeights()
+{
+  std::vector<float> ret(n_w);
+  queue.enqueueReadBuffer(w, CL_TRUE, 0, sizeof(float)*n_w, ret.data());
+  return ret;
+}
+

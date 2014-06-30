@@ -35,6 +35,11 @@ public:
    * returns sign(<w,xi>) for x
    */
   void predict (const cl::Buffer& x, cl::Buffer& y);
+
+  std::vector<float>
+  getWeights();
+
+  inline const cl::Buffer& getCLWeigths () const {  return w; }
 protected:
   void setRandomWeights ();
 

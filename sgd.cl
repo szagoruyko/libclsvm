@@ -1,4 +1,4 @@
-float hingleLoss (float w, float x)
+/*float hingleLoss (float w, float x)
 {
   float z = w * x;
   if (z > 1.f) 
@@ -12,7 +12,7 @@ float dhingeLoss (float w, float x)
   if (z > 1.f)
     return 0.f;
   return x;
-}
+}*/
 
 __kernel
 void compute_kernel (__global const int* idx,
