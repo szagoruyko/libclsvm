@@ -20,16 +20,16 @@ int main (int argc, char** argv)
   const int n = xvar->dims[1];
   const int dims = xvar->dims[0];
 
+  // check that data is in single precision format
+  if (xvar->data_type != MAT_T_SINGLE || yvar->data_type != MAT_T_SINGLE)
+  {
+    std::cout << "Please provide data in single format: x [n_samples x dim], y [n_samples x 1]\n";
+    std::cout << "Quitting..\n";
+    return -1;
+  }
+
   std::cout << "Got " << n << " samples\n";
   std::cout << "Problem dimensionality: " << dims << std::endl;
-
-  std::vector<float> x (n*dims), y (n);
-  for (int i=0; i<n; ++i)
-  {
-    y[i] = ((double*)yvar->data)[i];
-    for (int j=0; j<dims; ++j)
-      x[i*dims + j] = ((float*)xvar->data)[i*dims + j];
-  }
 
   std::vector<cl::Platform> platforms(5);
   std::vector<cl::Device> mdevices(5);
@@ -42,8 +42,8 @@ int main (int argc, char** argv)
   cl::Context context (device);
   cl::CommandQueue queue (context, device);
 
-  cl::Buffer X (context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, sizeof(float)*n*dims, x.data());
-  cl::Buffer Y (context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, sizeof(float)*n, y.data());
+  cl::Buffer X (context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, sizeof(float)*n*dims, xvar->data);
+  cl::Buffer Y (context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, sizeof(float)*n, yvar->data);
   cl::Buffer D (context, CL_MEM_READ_WRITE, sizeof(float)*n);
 
   CLSVM svm (queue, dims);
@@ -55,9 +55,9 @@ int main (int argc, char** argv)
   int missclassified = 0;
   for(int i=0; i<n; ++i)
   {
-    if ((d[i]>0.f)*2.f - 1.f != y[i])
+    if ((d[i]>0.f)*2.f - 1.f != ((float*)yvar->data)[i])
       missclassified++;
-   std::cout << (d[i]>0.f)*2.f-1.f << " " << y[i] << std::endl;
+    //std::cout << (d[i]>0.f)*2.f-1.f << " " << y[i] << std::endl;
   }
   std::cout << missclassified << "/" << n << std::endl;
   return 0;
