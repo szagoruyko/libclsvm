@@ -5,20 +5,19 @@
 
 #include "clsvm.hpp"
 
-enum {CTX = 32};
+enum {CTX = 32, CTU = 32};
 
 CLSVM::CLSVM(const cl::CommandQueue queue, int dims) : queue(queue), dim(dims), n_w(dims+1) {
   const char source_name[] = "sgd.cl";
   printf ("Loading opencl source (%s)...\n", source_name);
-        
+
   std::ifstream source_file (source_name);
   if(!source_file.is_open())
     std::cout<< "File " << source_name << " not found" <<std::endl;
       
   auto context = queue.getInfo<CL_QUEUE_CONTEXT>();
   std::vector<cl::Device> devices (1, queue.getInfo<CL_QUEUE_DEVICE>());
-  std::string code (std::istreambuf_iterator<char>(source_file),
-		   (std::istreambuf_iterator<char>()));
+  std::string code (std::istreambuf_iterator<char>(source_file), (std::istreambuf_iterator<char>()));
   program = cl::Program (context, code);
   program.build (devices, "");
   
@@ -41,7 +40,7 @@ CLSVM::train (const cl::Buffer& x, const cl::Buffer& y, int batch_size, int max_
   std::vector<float> hy (n);
   queue.enqueueReadBuffer (y, CL_TRUE, 0, sizeof(float)*n, hy.data());
   
-  setRandomWeights();
+  setRandomWeights(lambda);
   
   auto kernel = cl::make_kernel<const cl::Buffer&, const cl::Buffer&, const cl::Buffer&, cl::Buffer&, int> (program, "compute_kernel");
   auto update = cl::make_kernel<const cl::Buffer&, const cl::Buffer&, const cl::Buffer&, cl::Buffer&, int, float, float, int> (program, "update_weights");
@@ -74,7 +73,8 @@ CLSVM::train (const cl::Buffer& x, const cl::Buffer& y, int batch_size, int max_
     float etat = 1.0f/(lambda*float(t));
     
     int n_selected = static_cast<int> (selected.size());
-    update (cl::EnqueueArgs (queue, cl::NDRange(n_w)), idx, x, y, w, dim, etat, lambda, n_selected);
+    int nwrk = (n_w + CTU -1)/CTU;
+    cl::Event event = update (cl::EnqueueArgs (queue, cl::NDRange(nwrk*CTU), cl::NDRange(CTU)), idx, x, y, w, dim, etat, lambda, n_selected);
     
     // compute norm and project onto l2 norm ball
     float norm = computeWeigtsNorm();
@@ -90,20 +90,20 @@ CLSVM::decision_function (const cl::Buffer& x, cl::Buffer& decision)
   int n_samples = static_cast<int>(x.getInfo<CL_MEM_SIZE>())/sizeof(float)/dim;
   auto kernel = cl::make_kernel<const cl::Buffer&, const cl::Buffer&, cl::Buffer&, int, int> (program, "decision_function");
 
-  int nw = (n_samples + CTX -1)/CTX;
-  cl::Event event = kernel (cl::EnqueueArgs(queue, cl::NDRange (nw*CTX), cl::NDRange(CTX)), x, w, decision, dim, n_samples);
+  int nwrk = (n_samples + CTX -1)/CTX;
+  cl::Event event = kernel (cl::EnqueueArgs(queue, cl::NDRange (nwrk*CTX), cl::NDRange(CTX)), x, w, decision, dim, n_samples);
   event.wait();
   auto st = event.getProfilingInfo<CL_PROFILING_COMMAND_START>();
   auto fn = event.getProfilingInfo<CL_PROFILING_COMMAND_END>();
-  std::cout << float(fn - st)/1000000.0 << " ms" << std::endl;
+  std::cout << "decision_function exec time: " << float(fn - st)/1000000.0 << " ms" << std::endl;
 }
 
 
 void
-CLSVM::setRandomWeights ()
+CLSVM::setRandomWeights (float lambda)
 {
   Eigen::VectorXf winit = Eigen::VectorXf::Random (n_w);
-  //std::cout << winit.norm() << " " << 1.f/sqrt(lambda) << std::endl;
+//  std::cout << winit.norm() << " " << 1.f/sqrt(lambda) << std::endl;
   queue.enqueueWriteBuffer (w, CL_TRUE, 0, sizeof(float)*n_w, winit.data());
 }
 

@@ -43,7 +43,7 @@ public:
 
   inline const cl::Buffer& getCLWeigths () const {  return w; }
 protected:
-  void setRandomWeights ();
+  void setRandomWeights (float lambda);
 
   float computeWeigtsNorm ();
 
