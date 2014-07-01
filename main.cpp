@@ -46,7 +46,7 @@ int main (int argc, char** argv)
   cl::Buffer Y (context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, sizeof(float)*n, yvar->data);
   cl::Buffer D (context, CL_MEM_READ_WRITE, sizeof(float)*n);
 
-  CLSVM svm (queue, dims);
+  CLSVM svm (dims, queue);
   svm.train(X, Y, 64, 2000, 1e+0f);
   svm.predict (X, D);
 

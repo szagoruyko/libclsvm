@@ -17,7 +17,7 @@ void printProfilingInfo (const std::string& message, const cl::Event& event)
 }
 
 
-CLSVM::CLSVM(const cl::CommandQueue queue, int dims) : queue(queue), dim(dims), n_w(dims+1) {
+CLSVM::CLSVM (int dims, const cl::CommandQueue queue) : queue(queue), dim(dims), n_w(dims+1) {
   const char source_name[] = "sgd.cl";
   printf ("Loading opencl source (%s)...\n", source_name);
 
@@ -111,6 +111,17 @@ void
 CLSVM::decision_function (const cl::Buffer& x, cl::Buffer& decision)
 {
   compute_temlate(x, decision, "decision_function");
+}
+
+
+void
+CLSVM::train (const std::vector<float>& x_host, const std::vector<float>& y_host, int batch_size, int max_epochs, float lambda)
+{
+  auto context = queue.getInfo<CL_QUEUE_CONTEXT>();
+  size_t n = y_host.size();
+  cl::Buffer X (context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, sizeof(float)*n*dim, (void*)x_host.data());
+  cl::Buffer Y (context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, sizeof(float)*n, (void*)y_host.data());
+  train(X, Y, batch_size, max_epochs, lambda);
 }
 
 

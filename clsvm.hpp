@@ -8,10 +8,7 @@
 
 class CLSVM {
 public:
-  /*
-   * implements PEGASOS algorithm
-   */
-  CLSVM(const cl::CommandQueue queue, int dims);
+  CLSVM (int dims, const cl::CommandQueue queue = cl::CommandQueue::getDefault());
 
   /*
    * train binary SVM with Hinge loss function
