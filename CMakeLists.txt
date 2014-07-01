@@ -4,7 +4,6 @@ set(PROJECT_NAME toy_problem)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_LIST_DIR}/cmake")
 
 find_package(Eigen3 REQUIRED)
-find_package(OpenCV REQUIRED)
 find_package(OpenCL REQUIRED)
 
 set(EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR}/bin)
