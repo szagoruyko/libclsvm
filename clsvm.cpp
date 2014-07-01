@@ -1,7 +1,7 @@
 #include <vector>
 #include <fstream>
 #include <iostream>
-#include <Eigen/Core>
+#include <cmath>
 
 #include "clsvm.hpp"
 
@@ -102,9 +102,13 @@ CLSVM::decision_function (const cl::Buffer& x, cl::Buffer& decision)
 void
 CLSVM::setRandomWeights (float lambda)
 {
-  Eigen::VectorXf winit = Eigen::VectorXf::Random (n_w);
-//  std::cout << winit.norm() << " " << 1.f/sqrt(lambda) << std::endl;
+  std::vector<float> winit(n_w);
+  for (auto &it: winit)
+    it = float(rand()%RAND_MAX)/float(RAND_MAX);
   queue.enqueueWriteBuffer (w, CL_TRUE, 0, sizeof(float)*n_w, winit.data());
+  float norm = computeWeigtsNorm();
+  if (1.f/sqrt(lambda)/norm <= 1.f)
+    projectOntoL2Ball(norm);
 }
 
 
