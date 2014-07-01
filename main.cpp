@@ -48,17 +48,14 @@ int main (int argc, char** argv)
 
   CLSVM svm (queue, dims);
   svm.train(X, Y, 64, 2000, 1e+0f);
-  svm.decision_function (X, D);
+  svm.predict (X, D);
 
   std::vector<float> d (n);
   queue.enqueueReadBuffer(D, CL_TRUE, 0, sizeof(float)*n, d.data());
   int missclassified = 0;
   for(int i=0; i<n; ++i)
-  {
-    if ((d[i]>0.f)*2.f - 1.f != ((float*)yvar->data)[i])
+    if (d[i] != ((float*)yvar->data)[i])
       missclassified++;
-    //std::cout << (d[i]>0.f)*2.f-1.f << " " << y[i] << std::endl;
-  }
   std::cout << missclassified << "/" << n << std::endl;
   return 0;
 }
