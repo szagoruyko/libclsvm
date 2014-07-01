@@ -7,6 +7,15 @@
 
 enum {CTX = 32, CTU = 32};
 
+// temporary profiling function
+void printProfilingInfo (const char* message, const cl::Event& event)
+{
+  auto st = event.getProfilingInfo<CL_PROFILING_COMMAND_START>();
+  auto fn = event.getProfilingInfo<CL_PROFILING_COMMAND_END>();
+  std::cout << message << " time: " << float(fn - st)/1000000.0 << " ms" << std::endl;
+}
+
+
 CLSVM::CLSVM(const cl::CommandQueue queue, int dims) : queue(queue), dim(dims), n_w(dims+1) {
   const char source_name[] = "sgd.cl";
   printf ("Loading opencl source (%s)...\n", source_name);
@@ -93,9 +102,7 @@ CLSVM::decision_function (const cl::Buffer& x, cl::Buffer& decision)
   int nwrk = (n_samples + CTX -1)/CTX;
   cl::Event event = kernel (cl::EnqueueArgs(queue, cl::NDRange (nwrk*CTX), cl::NDRange(CTX)), x, w, decision, dim, n_samples);
   event.wait();
-  auto st = event.getProfilingInfo<CL_PROFILING_COMMAND_START>();
-  auto fn = event.getProfilingInfo<CL_PROFILING_COMMAND_END>();
-  std::cout << "decision_function exec time: " << float(fn - st)/1000000.0 << " ms" << std::endl;
+  printProfilingInfo("decision_function exec time", event);
 }
 
 
