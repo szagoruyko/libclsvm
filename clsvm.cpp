@@ -5,10 +5,11 @@
 
 #include "clsvm.hpp"
 
+
 enum {CTX = 32, CTU = 32};
 
 // temporary profiling function
-void printProfilingInfo (const char* message, const cl::Event& event)
+void printProfilingInfo (const std::string& message, const cl::Event& event)
 {
   auto st = event.getProfilingInfo<CL_PROFILING_COMMAND_START>();
   auto fn = event.getProfilingInfo<CL_PROFILING_COMMAND_END>();
@@ -94,15 +95,29 @@ CLSVM::train (const cl::Buffer& x, const cl::Buffer& y, int batch_size, int max_
 
 
 void
-CLSVM::decision_function (const cl::Buffer& x, cl::Buffer& decision)
+CLSVM::compute_temlate(const cl::Buffer& x, cl::Buffer &y, const std::string& kernel_name)
 {
   int n_samples = static_cast<int>(x.getInfo<CL_MEM_SIZE>())/sizeof(float)/dim;
-  auto kernel = cl::make_kernel<const cl::Buffer&, const cl::Buffer&, cl::Buffer&, int, int> (program, "decision_function");
+  auto kernel = cl::make_kernel<const cl::Buffer&, const cl::Buffer&, cl::Buffer&, int, int> (program, kernel_name);
 
   int nwrk = (n_samples + CTX -1)/CTX;
-  cl::Event event = kernel (cl::EnqueueArgs(queue, cl::NDRange (nwrk*CTX), cl::NDRange(CTX)), x, w, decision, dim, n_samples);
+  cl::Event event = kernel (cl::EnqueueArgs(queue, cl::NDRange (nwrk*CTX), cl::NDRange(CTX)), x, w, y, dim, n_samples);
   event.wait();
-  printProfilingInfo("decision_function exec time", event);
+  printProfilingInfo(kernel_name + " exec time", event);
+}
+
+
+void
+CLSVM::decision_function (const cl::Buffer& x, cl::Buffer& decision)
+{
+  compute_temlate(x, decision, "decision_function");
+}
+
+
+void
+CLSVM::predict (const cl::Buffer& x, cl::Buffer& y)
+{
+  compute_temlate(x, y, "predict");
 }
 
 

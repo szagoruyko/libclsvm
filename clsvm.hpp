@@ -48,6 +48,8 @@ protected:
   float computeWeigtsNorm ();
 
   void projectOntoL2Ball (float norm);
+  
+  void compute_temlate (const cl::Buffer& x, cl::Buffer& y, const std::string& kernel_name);
 protected:
   cl::CommandQueue queue;
   cl::Program program;
