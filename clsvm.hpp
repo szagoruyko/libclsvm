@@ -8,7 +8,7 @@
 
 class CLSVM {
 public:
-  CLSVM (int dims, const cl::CommandQueue queue = cl::CommandQueue::getDefault());
+  CLSVM (int dims, const std::string loss = "l1", const cl::CommandQueue queue = cl::CommandQueue::getDefault());
 
   /*
    * train binary SVM with Hinge loss function

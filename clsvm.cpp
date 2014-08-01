@@ -17,7 +17,7 @@ void printProfilingInfo (const std::string& message, const cl::Event& event)
 }
 
 
-CLSVM::CLSVM (int dims, const cl::CommandQueue queue) : queue(queue), dim(dims), n_w(dims+1) {
+CLSVM::CLSVM (int dims, const std::string loss, const cl::CommandQueue queue) : queue(queue), dim(dims), n_w(dims+1) {
   const char source_name[] = "sgd.cl";
   printf ("Loading opencl source (%s)...\n", source_name);
 

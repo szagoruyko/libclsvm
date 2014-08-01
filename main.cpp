@@ -46,7 +46,7 @@ int main (int argc, char** argv)
   cl::Buffer Y (context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, sizeof(float)*n, yvar->data);
   cl::Buffer D (context, CL_MEM_READ_WRITE, sizeof(float)*n);
 
-  CLSVM svm (dims, queue);
+  CLSVM svm (dims, "l1", queue);
   svm.train(X, Y, 64, 2000, 1e+0f);
   svm.predict (X, D);
 
@@ -57,5 +57,18 @@ int main (int argc, char** argv)
     if (d[i] != ((float*)yvar->data)[i])
       missclassified++;
   std::cout << missclassified << "/" << n << std::endl;
+  
+//  if (argc==2)
+  {
+    std::cout << "Writing weights to file " << argv[2] << std::endl;
+    auto w = svm.getWeights();
+    mat_t* mat = Mat_Create(argv[2], NULL);
+    size_t dims[] = {w.size(), 1};
+    matvar_t* wvar = Mat_VarCreate("w", MAT_C_SINGLE, MAT_T_SINGLE, 2, dims, w.data(), 0);
+    Mat_VarWrite (mat, wvar, MAT_COMPRESSION_NONE);
+    
+    Mat_VarFree(wvar);
+    Mat_Close(mat);
+  }
   return 0;
 }
